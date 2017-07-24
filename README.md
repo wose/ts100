@@ -30,7 +30,7 @@
 
 ![CPU Board Top](/doc/cpu_board_top.png)
 
-![CPU_Board_Bottom](/doc/cpu_board_bottom)
+![CPU_Board_Bottom](/doc/cpu_board_bottom.png)
 
 ## Debugger Interface
 
