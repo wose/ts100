@@ -7,15 +7,83 @@
 - STM32F103T8U6
   - [Datasheet](http://www.st.com/content/ccc/resource/technical/document/datasheet/33/d4/6f/1d/df/0b/4c/6d/CD00161566.pdf/files/CD00161566.pdf/jcr:content/translations/en.CD00161566.pdf)
 - OLED M00881
+  - [Datasheet](http://www.i-excellence.com/uploads/201612/585e217f4cc6e.pdf)
   - SSD1306 controller
   - I²C address: 0x3c
 - Accelerometer MMA8652FC
   - [Datasheet](http://cache.freescale.com/files/sensors/doc/data_sheet/MMA8652FC.pdf)
   - I²C address: 0x1d
+- TMP36GRTZ
+  - [Datasheet](http://www.analog.com/media/en/technical-documentation/data-sheets/TMP35_36_37.pdf)
+  - used for cold junction compensation for the thermocouple in the tip
+  - nice application note from TI on [thermocouple and cold junction](http://www.ti.com/lit/an/sloa204/sloa204.pdf)
 
+### Schematics
 
 ![Schematics](/doc/schematics.png)
 
+### PCB
+
+![Main Board Top](/doc/main_board_top.png)
+
+![Main Board Bottom](/doc/main_board_bottom.png)
+
+![CPU Board Top](/doc/cpu_board_top.png)
+
+![CPU_Board_Bottom](/doc/cpu_board_bottom)
+
+## Debugger Interface
+
+The SWD interface is exposed as 4 solder pads at the bottom of the CPU board.
+- VCC (NC)
+- GND (NC)
+- SWCLK (blue wire)
+- SWDIO (red wire)
+
+I added a little bit of kapton tape in between the CPU and main board before assembling to minimize
+the damage if the solder connection breaks.
+
+![CPU and Main board](/doc/kapton_tape.png)
+
+
+## Firmware Backup
+
+It's probably a good idea to backup the original firmware including the (horrible) bootloader. After
+connecting an ST-Link programmer you can use [openocd](http://openocd.org/) to dump the flash.
+
+Start openocd:
+```shell
+% openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
+Open On-Chip Debugger 0.9.0 (2017-03-07-13:28)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.org/doc/doxygen/bugs.html
+        Info : auto-selecting first available session transport "hla_swd". To override use 'transport select <transport>'.
+        Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+        adapter speed: 1000 kHz
+        adapter_nsrst_delay: 100
+        none separate
+        Info : Unable to match requested speed 1000 kHz, using 950 kHz
+        Info : Unable to match requested speed 1000 kHz, using 950 kHz
+        Info : clock speed 950 kHz
+        Info : STLINK v2 JTAG v17 API v2 SWIM v4 VID 0x0483 PID 0x3748
+        Info : using stlink api v2
+        Info : Target voltage: 3.245003
+        Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+```
+
+Dump the firmware:
+```shell
+% telnet localhost 4444
+Trying ::1...
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+Open On-Chip Debugger
+> dump_image ts100_orig.bin 0x08000000 0xffff
+dumped 65535 bytes in 1.386794s (46.149 KiB/s)
+>
+```
 
 ## License
 
