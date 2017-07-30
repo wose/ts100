@@ -2,13 +2,16 @@
 
 > ts100 soldering iron firmware written in Rust
 
+:warning: You can't solder with this firmware (yet) :warning:
+Take a look at [Ralim/ts100](https://github.com/Ralim/ts100) for a feature complete alternative.
+
 ## Hardware
 
 - STM32F103T8U6
   - [Datasheet](http://www.st.com/content/ccc/resource/technical/document/datasheet/33/d4/6f/1d/df/0b/4c/6d/CD00161566.pdf/files/CD00161566.pdf/jcr:content/translations/en.CD00161566.pdf)
 - OLED M00881
   - [Datasheet](http://www.i-excellence.com/uploads/201612/585e217f4cc6e.pdf)
-  - SSD1306 controller
+  - SSD1306Z driver IC
   - I²C address: 0x3c
 - Accelerometer MMA8652FC
   - [Datasheet](http://cache.freescale.com/files/sensors/doc/data_sheet/MMA8652FC.pdf)
