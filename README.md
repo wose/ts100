@@ -8,18 +8,26 @@ Take a look at [Ralim/ts100](https://github.com/Ralim/ts100) for a feature compl
 ## Hardware
 
 - STM32F103T8U6
-  - [Datasheet](http://www.st.com/content/ccc/resource/technical/document/datasheet/33/d4/6f/1d/df/0b/4c/6d/CD00161566.pdf/files/CD00161566.pdf/jcr:content/translations/en.CD00161566.pdf)
+  - [Datasheet (pdf)][stm32f10x datasheet]
+  - [Reference Manual (huge pdf)][stm32f10x refman]
 - OLED M00881
-  - [Datasheet](http://www.i-excellence.com/uploads/201612/585e217f4cc6e.pdf)
+  - [Datasheet (pdf)][M00881 datasheet]
   - SSD1306Z driver IC
   - I²C address: 0x3c
 - Accelerometer MMA8652FC
-  - [Datasheet](http://cache.freescale.com/files/sensors/doc/data_sheet/MMA8652FC.pdf)
+  - [Datasheet (pdf)][MMA8652FC datasheet]
   - I²C address: 0x1d
 - TMP36GRTZ
-  - [Datasheet](http://www.analog.com/media/en/technical-documentation/data-sheets/TMP35_36_37.pdf)
+  - [Datasheet (pdf)][ti thermocouple]
   - used for cold junction compensation for the thermocouple in the tip
-  - nice application note from TI on [thermocouple and cold junction](http://www.ti.com/lit/an/sloa204/sloa204.pdf)
+  - nice application note from TI on [thermocouple and cold junction (pdf)][ti thermocouple]
+
+[stm32f10x datasheet]: http://www.st.com/content/ccc/resource/technical/document/datasheet/33/d4/6f/1d/df/0b/4c/6d/CD00161566.pdf/files/CD00161566.pdf/jcr:content/translations/en.CD00161566.pdf
+[stm32f10x refman]: http://www.st.com/content/ccc/resource/technical/document/reference_manual/59/b9/ba/7f/11/af/43/d5/CD00171190.pdf/files/CD00171190.pdf/jcr:content/translations/en.CD00171190.pdf
+[M00881 datasheet]: http://www.i-excellence.com/uploads/201612/585e217f4cc6e.pdf
+[MMA8652FC datasheet]: http://cache.freescale.com/files/sensors/doc/data_sheet/MMA8652FC.pdf
+[TMP36GRTZ datasheet]: http://www.analog.com/media/en/technical-documentation/data-sheets/TMP35_36_37.pdf
+[ti thermocouple]: http://www.ti.com/lit/an/sloa204/sloa204.pdf
 
 ### Schematics
 
@@ -55,7 +63,7 @@ It's probably a good idea to backup the original firmware including the (horribl
 connecting an ST-Link programmer you can use [openocd](http://openocd.org/) to dump the flash.
 
 Start openocd:
-```shell
+```
 % openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
 Open On-Chip Debugger 0.9.0 (2017-03-07-13:28)
 Licensed under GNU GPL v2
@@ -76,7 +84,7 @@ For bug reports, read
 ```
 
 Dump the firmware:
-```shell
+```
 % telnet localhost 4444
 Trying ::1...
 Trying 127.0.0.1...
