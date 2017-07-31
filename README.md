@@ -5,6 +5,8 @@
 :warning: You can't solder with this firmware (yet) :warning:
 Take a look at [Ralim/ts100](https://github.com/Ralim/ts100) for a feature complete alternative.
 
+![v0.1.0](/doc/v0.1.0.png)
+
 ## Hardware
 
 - STM32F103T8U6
