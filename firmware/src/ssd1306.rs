@@ -7,7 +7,7 @@ use i2c;
 const COMMAND_MODE: u8 = 0x80;
 const DATA_MODE: u8 = 0x40;
 // Commands
-const CHARGE_PUMP_SETTING: u8 =	0x8d;
+const CHARGE_PUMP_SETTING: u8 = 0x8d;
 const CHARGE_PUMP_ENABLE: u8 = 0x14;
 
 const DISPLAY_OFF: u8 = 0xAE;
@@ -86,7 +86,7 @@ impl<'a> SSD1306<'a> {
 
     pub fn print(&self, x: u8, y: u8, text: &str) -> &Self {
         self.send_command(0x00 + ((6 * x + 32) & 0x0f))
-            .send_command(0x10 + (((6 * x + 32 ) >> 4) & 0x0f))
+            .send_command(0x10 + (((6 * x + 32) >> 4) & 0x0f))
             .send_command(0xB0 + y);
 
         for byte in text.as_bytes().iter().cloned() {
