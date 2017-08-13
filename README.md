@@ -98,6 +98,58 @@ dumped 65535 bytes in 1.386794s (46.149 KiB/s)
 >
 ```
 
+## Hacking
+
+### Dependencies
+
+- Rust nighly
+- OpenOCD
+- GNU ld
+- GDB
+- Xargo
+
+```
+% rustup default nightly
+% rustc -V
+rustc 1.21.0-nightly (f774bced5 2017-08-12)
+
+% sudo apt-get install binutils-arm-none-eabi gdb-arm-none-eabi openocd
+% arm-none-eabi-ld -V | head -n1
+GNU ld (2.28-5+9+b3) 2.28
+% arm-none-eabi-gdb -v | head -n1
+GNU gdb (7.12-6+9+b2) 7.12.0.20161007-git
+% openocd -v 2>&1 | head -n1
+Open On-Chip Debugger 0.9.0 (2017-03-07-13:28)
+
+% cargo install xargo
+% xargo -V
+xargo 0.3.8
+cargo 0.22.0-nightly (7704f7b1f 2017-08-09)
+
+% rustup component add rust-src
+```
+
+### Compiling
+
+```
+% git clone https://github.com/wose/ts100.git
+% cd ts100/firmware
+% xargo build --release
+```
+
+### OpenOCD/GDB
+
+Connect the soldering iron to the ST-Link programmer and start `openocd`:
+```
+% openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
+```
+
+Start `gdb` in another terminal. The included [.gdbinit](firmware/.gdbinit) will
+connect to openocd and flash the chip when `gdb` is started.
+```
+% arm-none-eabi-gdb target/thumbv7m-none-eabi/release/firmware
+```
+
 ## License
 
 Licensed under either of
