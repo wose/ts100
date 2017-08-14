@@ -9,6 +9,7 @@ extern crate blue_pill;
 
 use cortex_m::peripheral::SystClkSource;
 use rtfm::{app, Threshold};
+use blue_pill::stm32f103xx::Interrupt;
 
 mod font5x7;
 mod i2c;
@@ -18,11 +19,23 @@ use ssd1306::SSD1306;
 
 const OLED_ADDR: u8 = 0x3c;
 
+pub enum Keys {
+    A,
+    B,
+    AB,
+    None,
+}
+
+pub struct State {
+    pub keys: Keys,
+}
+
 app! {
     device: blue_pill::stm32f103xx,
 
     resources: {
         static TICKS: u32 = 0;
+        static KEYS: Keys = Keys::None;
     },
 
     tasks: {
@@ -30,9 +43,13 @@ app! {
             path: tick,
             resources: [TICKS],
         },
+        EXTI0: {
+            path: update_ui,
+            resources: [I2C1, KEYS],
+        },
         EXTI9_5: {
             path: exti9_5,
-            resources: [I2C1, EXTI],
+            resources: [KEYS, GPIOA, EXTI],
         },
     },
 }
@@ -142,6 +159,8 @@ fn init(p: init::Peripherals, _r: init::Resources) {
 }
 
 fn idle() -> ! {
+    rtfm::set_pending(Interrupt::EXTI0);
+
     loop {
         rtfm::wfi();
     }
@@ -151,26 +170,54 @@ fn tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
     **r.TICKS += 1;
 }
 
-fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
-    let exti = &**r.EXTI;
+fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
     let i2c1 = &**r.I2C1;
     let oled = SSD1306(OLED_ADDR, &i2c1);
-    oled.print(0, 0, "EXTI9_5         ");
+
+    match **r.KEYS {
+        Keys::A => {
+            oled.print(0, 0, "        A       ");
+            oled.print(0, 1, "     pressed    ");
+        }
+        Keys::B => {
+            oled.print(0, 0, "        B       ");
+            oled.print(0, 1, "     pressed    ");
+        }
+        Keys::AB => {
+            oled.print(0, 0, "     A and B    ");
+            oled.print(0, 1, "     pressed    ");
+        }
+        Keys::None => {
+            oled.print(0, 0, "   Hello from   ");
+            oled.print(0, 1, "      Rust      ");
+        }
+    }
+}
+
+fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
+    let exti = &**r.EXTI;
+    let gpioa = &**r.GPIOA;
 
     // Button A
     if exti.pr.read().pr6().bit_is_set() {
-        oled.print(0, 1, "Button A IRQ    ");
+        **r.KEYS = if gpioa.idr.read().idr6().bit_is_clear() {
+            Keys::A
+        } else {
+            Keys::None
+        };
         exti.pr.write(|w| w.pr6().set_bit());
-    }
-
     // Button B
-    if exti.pr.read().pr9().bit_is_set() {
-        oled.print(0, 1, "Button B IRQ    ");
+    } else if exti.pr.read().pr9().bit_is_set() {
+        **r.KEYS = if gpioa.idr.read().idr9().bit_is_clear() {
+            Keys::B
+        } else {
+            Keys::None
+        };
         exti.pr.write(|w| w.pr9().set_bit());
-    }
-
-    // Accelerometer Movement
-    if exti.pr.read().pr5().bit_is_set() {
+    // Movement
+    } else if exti.pr.read().pr5().bit_is_set() {
         exti.pr.write(|w| w.pr5().set_bit());
     }
+
+    rtfm::set_pending(Interrupt::EXTI0);
 }
