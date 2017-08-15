@@ -19,6 +19,22 @@ use ssd1306::SSD1306;
 
 const OLED_ADDR: u8 = 0x3c;
 
+#[derive(Clone, Copy)]
+pub enum ConfigPage {
+    Save,
+}
+
+#[derive(Clone, Copy)]
+pub enum State {
+    Idle,
+    Soldering,
+    TemperatureControl,
+    Config(ConfigPage),
+    Sleep,
+    Cooling,
+    Thermometer,
+}
+
 pub enum Keys {
     A,
     B,
@@ -26,8 +42,42 @@ pub enum Keys {
     None,
 }
 
-pub struct State {
-    pub keys: Keys,
+pub struct StateMachine {
+    keys: Keys,
+    state: State,
+}
+
+impl StateMachine {
+    pub const fn new() -> Self {
+        StateMachine {
+            keys: Keys::None,
+            state: State::Idle,
+        }
+    }
+
+    pub fn update_keys(&mut self, keys: Keys) {
+        self.keys = keys;
+    }
+
+    pub fn current_state(&self) -> State {
+        self.state
+    }
+
+    pub fn update_state(&mut self) {
+        use State::*;
+        use Keys::*;
+
+        self.state = match (&self.state, &self.keys) {
+            (&Idle, &A) => Soldering,
+            (&Idle, &B) => Thermometer,
+            (&Soldering, &A) | (&Soldering, &B) => TemperatureControl,
+            (&Soldering, &AB) => Idle,
+            (_, &None) => self.state,
+            _ => Idle,
+        };
+
+        self.keys = Keys::None;
+    }
 }
 
 app! {
@@ -35,7 +85,7 @@ app! {
 
     resources: {
         static TICKS: u32 = 0;
-        static KEYS: Keys = Keys::None;
+        static STATE: StateMachine = StateMachine::new();
     },
 
     tasks: {
@@ -45,11 +95,11 @@ app! {
         },
         EXTI0: {
             path: update_ui,
-            resources: [I2C1, KEYS],
+            resources: [I2C1, STATE],
         },
         EXTI9_5: {
             path: exti9_5,
-            resources: [KEYS, GPIOA, EXTI],
+            resources: [STATE, GPIOA, EXTI],
         },
     },
 }
@@ -174,22 +224,37 @@ fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
     let i2c1 = &**r.I2C1;
     let oled = SSD1306(OLED_ADDR, &i2c1);
 
-    match **r.KEYS {
-        Keys::A => {
-            oled.print(0, 0, "        A       ");
-            oled.print(0, 1, "     pressed    ");
+    r.STATE.update_state();
+
+    match r.STATE.current_state() {
+        State::Idle => {
+            oled.print(0, 0, "      IDLE      ");
+            oled.print(0, 1, "                ");
         }
-        Keys::B => {
-            oled.print(0, 0, "        B       ");
-            oled.print(0, 1, "     pressed    ");
+        State::Soldering => {
+            oled.print(0, 0, "    SOLDERING   ");
+            oled.print(0, 1, "                ");
         }
-        Keys::AB => {
-            oled.print(0, 0, "     A and B    ");
-            oled.print(0, 1, "     pressed    ");
+        State::Cooling => {
+            oled.print(0, 0, "     COOLING    ");
+            oled.print(0, 1, "                ");
         }
-        Keys::None => {
-            oled.print(0, 0, "   Hello from   ");
-            oled.print(0, 1, "      Rust      ");
+        State::Sleep => {
+            oled.print(0, 0, "     zZzZzZ     ");
+            oled.print(0, 1, "                ");
+        }
+        State::TemperatureControl => {
+            oled.print(0, 0, " <    200 C   > ");
+        }
+        State::Thermometer => {
+            oled.print(0, 0, "     200.1 C    ");
+        }
+        State::Config(page) => {
+            match page {
+                ConfigPage::Save => {
+                    oled.print(0, 0, "Save and Reset? ");
+                }
+            }
         }
     }
 }
@@ -200,18 +265,18 @@ fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
 
     // Button A
     if exti.pr.read().pr6().bit_is_set() {
-        **r.KEYS = if gpioa.idr.read().idr6().bit_is_clear() {
-            Keys::A
+        if gpioa.idr.read().idr6().bit_is_clear() {
+            r.STATE.update_keys(Keys::A);
         } else {
-            Keys::None
+            r.STATE.update_keys(Keys::None);
         };
         exti.pr.write(|w| w.pr6().set_bit());
     // Button B
     } else if exti.pr.read().pr9().bit_is_set() {
-        **r.KEYS = if gpioa.idr.read().idr9().bit_is_clear() {
-            Keys::B
+        if gpioa.idr.read().idr9().bit_is_clear() {
+            r.STATE.update_keys(Keys::B)
         } else {
-            Keys::None
+            r.STATE.update_keys(Keys::None)
         };
         exti.pr.write(|w| w.pr9().set_bit());
     // Movement
