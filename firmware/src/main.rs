@@ -14,71 +14,12 @@ use blue_pill::stm32f103xx::Interrupt;
 mod font5x7;
 mod i2c;
 mod ssd1306;
+mod state;
 
 use ssd1306::SSD1306;
+use state::{ConfigPage, Keys, State, StateMachine};
 
 const OLED_ADDR: u8 = 0x3c;
-
-#[derive(Clone, Copy)]
-pub enum ConfigPage {
-    Save,
-}
-
-#[derive(Clone, Copy)]
-pub enum State {
-    Idle,
-    Soldering,
-    TemperatureControl,
-    Config(ConfigPage),
-    Sleep,
-    Cooling,
-    Thermometer,
-}
-
-pub enum Keys {
-    A,
-    B,
-    AB,
-    None,
-}
-
-pub struct StateMachine {
-    keys: Keys,
-    state: State,
-}
-
-impl StateMachine {
-    pub const fn new() -> Self {
-        StateMachine {
-            keys: Keys::None,
-            state: State::Idle,
-        }
-    }
-
-    pub fn update_keys(&mut self, keys: Keys) {
-        self.keys = keys;
-    }
-
-    pub fn current_state(&self) -> State {
-        self.state
-    }
-
-    pub fn update_state(&mut self) {
-        use State::*;
-        use Keys::*;
-
-        self.state = match (&self.state, &self.keys) {
-            (&Idle, &A) => Soldering,
-            (&Idle, &B) => Thermometer,
-            (&Soldering, &A) | (&Soldering, &B) => TemperatureControl,
-            (&Soldering, &AB) => Idle,
-            (_, &None) => self.state,
-            _ => Idle,
-        };
-
-        self.keys = Keys::None;
-    }
-}
 
 app! {
     device: blue_pill::stm32f103xx,
