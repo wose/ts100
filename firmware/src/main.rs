@@ -3,6 +3,7 @@
 #![feature(proc_macro)]
 #![no_std]
 
+extern crate cast;
 extern crate cortex_m;
 extern crate cortex_m_rtfm as rtfm;
 extern crate blue_pill;
@@ -13,9 +14,11 @@ use blue_pill::stm32f103xx::Interrupt;
 
 mod font5x7;
 mod i2c;
+mod mma8652fc;
 mod ssd1306;
 mod state;
 
+use mma8652fc::MMA8652FC;
 use ssd1306::SSD1306;
 use state::{ConfigPage, Keys, State, StateMachine};
 
@@ -40,7 +43,7 @@ app! {
         },
         EXTI9_5: {
             path: exti9_5,
-            resources: [STATE, GPIOA, EXTI],
+            resources: [I2C1, STATE, GPIOA, EXTI],
         },
     },
 }
@@ -143,6 +146,9 @@ fn init(p: init::Peripherals, _r: init::Resources) {
     oled.print(0, 0, "   Hello from   ");
     oled.print(0, 1, "      Rust      ");
 
+    let accel = MMA8652FC(&p.I2C1);
+    accel.init();
+
     p.SYST.set_clock_source(SystClkSource::Core);
     p.SYST.set_reload(48_000_000);
     p.SYST.enable_interrupt();
@@ -203,6 +209,7 @@ fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
 fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
     let exti = &**r.EXTI;
     let gpioa = &**r.GPIOA;
+    let i2c1 = &**r.I2C1;
 
     // Button A
     if exti.pr.read().pr6().bit_is_set() {
@@ -222,6 +229,10 @@ fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
         exti.pr.write(|w| w.pr9().set_bit());
     // Movement
     } else if exti.pr.read().pr5().bit_is_set() {
+        if gpioa.idr.read().idr5().bit_is_clear() {
+            let am = MMA8652FC(&i2c1);
+            r.STATE.update_accel(am.accel());
+        }
         exti.pr.write(|w| w.pr5().set_bit());
     }
 

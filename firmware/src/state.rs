@@ -1,3 +1,5 @@
+use mma8652fc::Accel;
+
 #[derive(Clone, Copy)]
 pub enum ConfigPage {
     Save,
@@ -22,6 +24,7 @@ pub enum State {
 }
 
 pub struct StateMachine {
+    accel: Accel,
     keys: Keys,
     state: State,
 }
@@ -29,6 +32,7 @@ pub struct StateMachine {
 impl StateMachine {
     pub const fn new() -> Self {
         StateMachine {
+            accel: Accel { x: 0, y: 0, z: 0},
             keys: Keys::None,
             state: State::Idle,
         }
@@ -36,6 +40,10 @@ impl StateMachine {
 
     pub fn update_keys(&mut self, keys: Keys) {
         self.keys = keys;
+    }
+
+    pub fn update_accel(&mut self, accel: Accel) {
+        self.accel = accel;
     }
 
     pub fn current_state(&self) -> State {
