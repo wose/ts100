@@ -42,6 +42,10 @@ impl StateMachine {
         self.keys = keys;
     }
 
+    pub fn get_accel(&self) -> Accel {
+        self.accel
+    }
+
     pub fn update_accel(&mut self, accel: Accel) {
         self.accel = accel;
     }

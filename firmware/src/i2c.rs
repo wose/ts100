@@ -1,6 +1,5 @@
 use blue_pill::stm32f103xx::I2C1;
 
-#[allow(unused)]
 pub fn read(i2c1: &I2C1, slave: u8, register: u8, bytes: &mut [u8]) {
     // wait for idle i2c interface
     while i2c1.sr2.read().busy().bit_is_set() {}
@@ -14,8 +13,19 @@ pub fn read(i2c1: &I2C1, slave: u8, register: u8, bytes: &mut [u8]) {
     i2c1.cr1.modify(|_, w| w.start().set_bit());
     while i2c1.sr1.read().sb().bit_is_clear() {}
 
+    i2c1.dr.write(|w| unsafe { w.dr().bits(slave << 1) });
+    while i2c1.sr1.read().addr().bit_is_clear() {}
+    while i2c1.sr2.read().tra().bit_is_clear() {}
+
+    while i2c1.sr1.read().tx_e().bit_is_clear() {}
+    i2c1.dr.write(|w| unsafe { w.dr().bits(register) });
+
+    // generate start
+    i2c1.cr1.modify(|_, w| w.start().set_bit());
+    while i2c1.sr1.read().sb().bit_is_clear() {}
+
     // send address
-    i2c1.dr.write(|w| unsafe { w.dr().bits((slave << 1) | (1 << 7)) });
+    i2c1.dr.write(|w| unsafe { w.dr().bits((slave << 1) | 0x0001) });
 
     // EV6
     while i2c1.sr1.read().addr().bit_is_clear() {}
@@ -48,7 +58,7 @@ pub fn read(i2c1: &I2C1, slave: u8, register: u8, bytes: &mut [u8]) {
         length => {
             // clear ADDR
             let _ = i2c1.sr2.read().bits();
-            for byte in (0..length-3) {
+            for byte in 0..length - 3 {
                 // EV7 wait for BTF
                 while i2c1.sr1.read().btf().bit_is_clear() {}
                 bytes[byte] = i2c1.dr.read().dr().bits();
@@ -62,7 +72,7 @@ pub fn read(i2c1: &I2C1, slave: u8, register: u8, bytes: &mut [u8]) {
             i2c1.cr1.modify(|_, w| w.stop().set_bit());
             bytes[length - 2] = i2c1.dr.read().dr().bits();
 
-//            while i2c1.sr2.read().busy().bit_is_set() {}
+            while i2c1.sr2.read().busy().bit_is_set() {}
 //            while i2c1.sr2.read().msl().bit_is_set() {}
             while i2c1.sr1.read().rx_ne().bit_is_clear() {}
 
@@ -70,7 +80,7 @@ pub fn read(i2c1: &I2C1, slave: u8, register: u8, bytes: &mut [u8]) {
         }
     }
 
-    while i2c1.sr1.read().stopf().bit_is_clear() {}
+//    while i2c1.sr1.read().stopf().bit_is_clear() {}
 }
 
 pub fn write(i2c1: &I2C1, slave: u8, register: u8, value: u8) {

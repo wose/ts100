@@ -84,6 +84,34 @@ impl<'a> SSD1306<'a> {
         self
     }
 
+    pub fn print_number(&self, x: u8, y: u8, number: i16) -> &Self {
+        self.send_command(0x00 + ((6 * x + 32) & 0x0f))
+            .send_command(0x10 + (((6 * x + 32) >> 4) & 0x0f))
+            .send_command(0xB0 + y);
+
+        let mut abs = number.abs();
+        let mut div = 10000;
+        while div > 0 {
+            let modulo = abs % div;
+            abs /= div;
+            if abs != 0 {
+                for column in 0..5 {
+                    self.send_data(font5x7::FONT_5X7[(16 + abs) as usize * 5 + column]);
+                }
+                self.send_data(0x00);
+            } else {
+                for column in 0..5 {
+                    self.send_data(font5x7::FONT_5X7[0 * 5 + column]);
+                }
+                self.send_data(0x00);
+            }
+            div /= 10;
+            abs = modulo;
+        }
+
+        self
+    }
+
     pub fn print(&self, x: u8, y: u8, text: &str) -> &Self {
         self.send_command(0x00 + ((6 * x + 32) & 0x0f))
             .send_command(0x10 + (((6 * x + 32) >> 4) & 0x0f))

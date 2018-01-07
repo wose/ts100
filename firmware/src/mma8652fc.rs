@@ -130,31 +130,31 @@ impl<'a> MMA8652FC<'a> {
     pub fn init(&self) {
         self
             // Normal Mode
-            .set_register(Register::Ctrl2, 0)
+            .set_register(Register::Ctrl2, 0);
             // Reset all registers to POR values
-            .set_register(Register::Ctrl2, 0x40)
+//            self.set_register(Register::Ctrl2, 0x40);
             // Enable motion detection for X, Y and Z axis, latch disabled
-            .set_register(Register::FreefallMotionCfg, 0x78)
+        self.set_register(Register::FreefallMotionCfg, 0x78);
             // Enable orientation detection
-            .set_register(Register::PortLandCfg, 0x40)
+        self.set_register(Register::PortLandCfg, 0x40);
             // set Debounce to 200 Counts
-            .set_register(Register::PortLandDeb, 200)
+        self.set_register(Register::PortLandDeb, 200);
             // set Threshold to 42 degrees
-            .set_register(Register::PortLandBFZComp, 0b01000111)
+        self.set_register(Register::PortLandBFZComp, 0b01000111);
             // set threshold
-            .set_register(Register::PortLandThr, 0b10011100)
+        self.set_register(Register::PortLandThr, 0b10011100);
             // enable data ready and orientation interrupt
-            .set_register(Register::Ctrl4, 0x01 | (1 << 4))
+        self.set_register(Register::Ctrl4, 0x01 | (1 << 4));
             // route data ready interrupt to INT1 and orientation interrupt to INT2
-            .set_register(Register::Ctrl5, 0x01)
+        self.set_register(Register::Ctrl5, 0x01);
             // set maximum resolution oversampling
-            .set_register(Register::Ctrl2, 0x12)
+        self.set_register(Register::Ctrl2, 0x12);
             // select high pass filtered data
-            .set_register(Register::XyzDataCfg, (1 << 4))
+        self.set_register(Register::XyzDataCfg, (1 << 4));
             // select high pass filtered data
-            .set_register(Register::HpFilterCutOff, 0x03)
+        self.set_register(Register::HpFilterCutOff, 0x03);
             // 12 Hz, active mode
-            .set_register(Register::Ctrl1, 0x19);
+        self.set_register(Register::Ctrl1, 0x19);
     }
 
     #[allow(dead_code)]
@@ -162,13 +162,13 @@ impl<'a> MMA8652FC<'a> {
         let sens = 9 * 2 + 17 - 2 * threshold;
         self
             // sleep mode
-            .set_register(Register::Ctrl1, 0)
+            .set_register(Register::Ctrl1, 0);
             // set accumulation threshold
-            .set_register(Register::FreefallMotionThr, (sens & 0x7F))
+            self.set_register(Register::FreefallMotionThr, (sens & 0x7F));
             // set debounce threshold
-            .set_register(Register::FreefallMotionCnt, filter_time)
+        self.set_register(Register::FreefallMotionCnt, filter_time);
             // 12 Hz, active mode
-            .set_register(Register::Ctrl1, 0x31)
+        self.set_register(Register::Ctrl1, 0x31)
     }
 
     pub fn accel(&self) -> Accel {

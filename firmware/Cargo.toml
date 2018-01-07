@@ -4,12 +4,12 @@ version = "0.1.0"
 authors = ["Sebastian Woetzel <wose@zuendmasse.de>"]
 
 [dependencies]
-cortex-m = "0.3.0"
+cortex-m = "0.3.1"
 cortex-m-rtfm = "0.2.0"
 
 [dependencies.blue-pill]
 git = "https://github.com/japaric/blue-pill"
-rev = "2b7d5c56b25f4efad6c7c40042f884cbecb47c0b"
+rev = "4338e167fc0233d25acd9c65b525e0f864b0a86f"
 
 [dependencies.byteorder]
 default-features = false
@@ -21,7 +21,7 @@ version = "0.2.2"
 
 [dependencies.cortex-m-rt]
 features = ["abort-on-panic"]
-version = "0.3.0"
+version = "0.3.5"
 
 [dependencies.nb]
 git = "https://github.com/japaric/nb"

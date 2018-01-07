@@ -143,8 +143,8 @@ fn init(p: init::Peripherals, _r: init::Resources) {
 
     let oled = SSD1306(OLED_ADDR, &p.I2C1);
     oled.init();
-    oled.print(0, 0, "   Hello from   ");
-    oled.print(0, 1, "      Rust      ");
+    oled.print(0, 0, "                ");
+    oled.print(0, 1, "                ");
 
     let accel = MMA8652FC(&p.I2C1);
     accel.init();
@@ -170,9 +170,20 @@ fn tick(_t: &mut Threshold, r: SYS_TICK::Resources) {
 fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
     let i2c1 = &**r.I2C1;
     let oled = SSD1306(OLED_ADDR, &i2c1);
+    let am = MMA8652FC(&i2c1);
+    r.STATE.update_accel(am.accel());
 
     r.STATE.update_state();
 
+    oled.print(0, 0, "X ");
+    oled.print(8, 0, "Y ");
+    oled.print(0, 1, "Z ");
+
+    let accel = r.STATE.get_accel();
+    oled.print_number(2, 0, accel.x);
+    oled.print_number(10, 0, accel.y);
+    oled.print_number(2, 1, accel.z);
+/*
     match r.STATE.current_state() {
         State::Idle => {
             oled.print(0, 0, "      IDLE      ");
@@ -204,6 +215,7 @@ fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
             }
         }
     }
+    */
 }
 
 fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
@@ -222,14 +234,15 @@ fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
     // Button B
     } else if exti.pr.read().pr9().bit_is_set() {
         if gpioa.idr.read().idr9().bit_is_clear() {
-            r.STATE.update_keys(Keys::B)
+           r.STATE.update_keys(Keys::B)
         } else {
             r.STATE.update_keys(Keys::None)
         };
         exti.pr.write(|w| w.pr9().set_bit());
     // Movement
+    // interrupt doesn't fire
     } else if exti.pr.read().pr5().bit_is_set() {
-        if gpioa.idr.read().idr5().bit_is_clear() {
+        if gpioa.idr.read().idr5().bit_is_set() {
             let am = MMA8652FC(&i2c1);
             r.STATE.update_accel(am.accel());
         }
