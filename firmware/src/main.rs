@@ -43,7 +43,7 @@ app! {
         },
         EXTI9_5: {
             path: exti9_5,
-            resources: [I2C1, STATE, GPIOA, EXTI],
+            resources: [I2C1, STATE, GPIOA, GPIOB, EXTI],
         },
     },
 }
@@ -221,6 +221,7 @@ fn update_ui(_t: &mut Threshold, r: EXTI0::Resources) {
 fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
     let exti = &**r.EXTI;
     let gpioa = &**r.GPIOA;
+    let gpiob = &**r.GPIOB;
     let i2c1 = &**r.I2C1;
 
     // Button A
@@ -242,7 +243,7 @@ fn exti9_5(_t: &mut Threshold, r: EXTI9_5::Resources) {
     // Movement
     // interrupt doesn't fire
     } else if exti.pr.read().pr5().bit_is_set() {
-        if gpioa.idr.read().idr5().bit_is_set() {
+        if gpiob.idr.read().idr5().bit_is_clear() {
             let am = MMA8652FC(&i2c1);
             r.STATE.update_accel(am.accel());
         }
