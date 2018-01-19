@@ -1,7 +1,8 @@
 use blue_pill::stm32f103xx::I2C1;
-
+use core::str;
 use font5x7;
 use i2c;
+use numtoa::NumToA;
 
 // Registers
 const COMMAND_MODE: u8 = 0x80;
@@ -85,30 +86,9 @@ impl<'a> SSD1306<'a> {
     }
 
     pub fn print_number(&self, x: u8, y: u8, number: i16) -> &Self {
-        self.send_command(0x00 + ((6 * x + 32) & 0x0f))
-            .send_command(0x10 + (((6 * x + 32) >> 4) & 0x0f))
-            .send_command(0xB0 + y);
-
-        let mut abs = number.abs();
-        let mut div = 10000;
-        while div > 0 {
-            let modulo = abs % div;
-            abs /= div;
-            if abs != 0 {
-                for column in 0..5 {
-                    self.send_data(font5x7::FONT_5X7[(16 + abs) as usize * 5 + column]);
-                }
-                self.send_data(0x00);
-            } else {
-                for column in 0..5 {
-                    self.send_data(font5x7::FONT_5X7[0 * 5 + column]);
-                }
-                self.send_data(0x00);
-            }
-            div /= 10;
-            abs = modulo;
-        }
-
+        let mut buffer = [32u8; 6];
+        number.numtoa(10, &mut buffer);
+        self.print(x, y, str::from_utf8(&buffer).unwrap());
         self
     }
 

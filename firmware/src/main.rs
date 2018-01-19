@@ -7,10 +7,11 @@ extern crate cast;
 extern crate cortex_m;
 extern crate cortex_m_rtfm as rtfm;
 extern crate blue_pill;
+extern crate numtoa;
 
+use blue_pill::stm32f103xx::Interrupt;
 use cortex_m::peripheral::SystClkSource;
 use rtfm::{app, Threshold};
-use blue_pill::stm32f103xx::Interrupt;
 
 mod font5x7;
 mod i2c;
